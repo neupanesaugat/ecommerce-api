@@ -8,3 +8,8 @@ export const userValidationSchema = Yup.object({
   gender: Yup.string().required().oneOf(["male", "female", "other"]),
   role: Yup.string().required().oneOf(["buyer", "seller"]),
 });
+
+export const loginUserValidationSchema = Yup.object({
+  email: Yup.string().required().lowercase().trim().email(),
+  password: Yup.string().required().trim(),
+});

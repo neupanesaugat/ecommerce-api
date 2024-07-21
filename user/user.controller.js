@@ -1,31 +1,21 @@
-import express from "express";
-import Yup from "yup";
-import User from "./user.model.js";
 import bcrypt from "bcrypt";
-import { userValidationSchema } from "./user.validation.js";
+import express from "express";
+import User from "./user.model.js";
+import {
+  loginUserValidationSchema,
+  userValidationSchema,
+} from "./user.validation.js";
+import validateRequestBody from "../middleware/authentication.middleware.js";
 
 const router = express.Router();
 
 //* register user
 router.post(
   "/register",
-  async (req, res, next) => {
-    //extract data from req.body
-    const data = req.body;
+  //? validate user
+  validateRequestBody(userValidationSchema),
 
-    userValidationSchema;
-
-    try {
-      //validate data
-      const validatedData = await userValidationSchema.validate(data);
-      req.body = validatedData;
-    } catch (error) {
-      // if validation fails, throw error
-      return res.status(400).send({ message: error.message });
-    }
-
-    next();
-  },
+  //? register user
   async (req, res) => {
     // extract data from req.body
     const newUser = req.body;
@@ -61,11 +51,36 @@ router.post(
 //* login
 router.post(
   "/login",
-  (req, res, next) => {
-    next();
-  },
-  (req, res) => {
-    return res.status(200).send({ message: "Login..." });
+  validateRequestBody(loginUserValidationSchema),
+  async (req, res) => {
+    // extract loginCredentials from req.body
+    const loginCredentials = req.body;
+
+    // find user using email
+    const user = await User.findOne({ email: loginCredentials.email });
+
+    // if not user, throw error
+    if (!user) {
+      return res.status(404).send({ message: "Invalid Credentials" });
+    }
+
+    // compare password using bcrypt
+    const plainPassword = loginCredentials.password;
+    const hashedPassword = user.password;
+    const password = await bcrypt.compare(plainPassword, hashedPassword);
+
+    // hide password
+    user.password = undefined;
+
+    // if password don't match, throw error
+    if (!password) {
+      return res.status(404).send({ message: "Invalid Credentials" });
+    }
+
+    // throw token
+    return res
+      .status(200)
+      .send({ message: "Login successful !", userDetail: user });
   }
 );
 
