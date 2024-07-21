@@ -15,7 +15,7 @@ router.post(
   //? validate user
   validateRequestBody(userValidationSchema),
 
-  //? register user
+  //? register new user
   async (req, res) => {
     // extract data from req.body
     const newUser = req.body;
@@ -51,7 +51,10 @@ router.post(
 //* login
 router.post(
   "/login",
+  //? validate login credentials
   validateRequestBody(loginUserValidationSchema),
+
+  //? login user
   async (req, res) => {
     // extract loginCredentials from req.body
     const loginCredentials = req.body;
