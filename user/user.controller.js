@@ -6,6 +6,7 @@ import {
   userValidationSchema,
 } from "./user.validation.js";
 import validateRequestBody from "../middleware/authentication.middleware.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -38,9 +39,6 @@ router.post(
     // send to DB
     await User.create(newUser);
 
-    // hide password
-    newUser.password = undefined;
-
     // send res
     return res
       .status(200)
@@ -72,18 +70,22 @@ router.post(
     const hashedPassword = user.password;
     const password = await bcrypt.compare(plainPassword, hashedPassword);
 
-    // hide password
-    user.password = undefined;
-
     // if password don't match, throw error
     if (!password) {
       return res.status(404).send({ message: "Invalid Credentials" });
     }
 
-    // throw token
-    return res
-      .status(200)
-      .send({ message: "Login successful !", userDetail: user });
+    // generate token
+    const payload = { email: user.email };
+    const secretKey = process.env.ACCESS_TOKEN_SECRET_KEY;
+    const token = await jwt.sign(payload, secretKey);
+
+    // send res
+    return res.status(200).send({
+      message: "Login successful !",
+      userDetail: user,
+      accessToken: token,
+    });
   }
 );
 

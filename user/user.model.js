@@ -39,6 +39,13 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+// delete password while giving response (converting to json)
+userSchema.methods.toJSON = function () {
+  let obj = this.toObject(); //or var obj = this;
+  delete obj.password;
+  return obj;
+};
+
 // create collection(model)
 const User = mongoose.model("User", userSchema);
 
