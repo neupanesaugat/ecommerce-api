@@ -5,7 +5,7 @@ export const isUser = async (req, res, next) => {
   // extract token from req.headers
   const { authorization } = req.headers;
 
-  const splittedArray = authorization.split(" ");
+  const splittedArray = authorization?.split(" ");
 
   const token = splittedArray?.length === 2 ? splittedArray[1] : null;
   // if not token, throw error
@@ -40,7 +40,7 @@ export const isSeller = async (req, res, next) => {
   // extract token from req.headers
   const { authorization } = req.headers;
 
-  const splittedArray = authorization.split(" ");
+  const splittedArray = authorization?.split(" ");
 
   const token = splittedArray?.length === 2 ? splittedArray[1] : null;
   // if not token, throw error
@@ -79,7 +79,7 @@ export const isBuyer = async (req, res, next) => {
   // extract token from req.headers
   const { authorization } = req.headers;
 
-  const splittedArray = authorization.split(" ");
+  const splittedArray = authorization?.split(" ");
 
   const token = splittedArray?.length === 2 ? splittedArray[1] : null;
   // if not token, throw error
