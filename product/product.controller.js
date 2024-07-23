@@ -1,13 +1,8 @@
 import express from "express";
-import Product from "./product.model.js";
-import jwt from "jsonwebtoken";
-import User from "../user/user.model.js";
-import {
-  isBuyer,
-  isSeller,
-  isUser,
-} from "../middleware/authentication.middleware.js";
+import { isSeller, isUser } from "../middleware/authentication.middleware.js";
+import validateMongoIdFromParams from "../middleware/validate.mongo.id.js";
 import validateRequestBody from "../middleware/validate.req.body.js";
+import Product from "./product.model.js";
 import { addProductValidationSchema } from "./product.validation.js";
 
 const router = express.Router();
@@ -31,6 +26,16 @@ router.post(
 
     await Product.create(newProduct);
     return res.status(201).send({ message: "Product added successfully" });
+  }
+);
+
+//* delete product
+router.delete(
+  "/delete/:id",
+  isSeller,
+  validateMongoIdFromParams,
+  (req, res) => {
+    return res.status(200).send({ message: "Deleting..." });
   }
 );
 
