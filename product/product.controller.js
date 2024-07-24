@@ -147,13 +147,19 @@ router.post(
   validateRequestBody(paginationDataValidationSchema),
   async (req, res) => {
     //? extract pagination data from req.body
-    const { page, limit } = req.body; //? destructure
+    const { page, limit, searchText } = req.body; //? destructure
 
     //? calculate skip
     const skip = (page - 1) * limit;
 
+    //condition
+    let match = { sellerId: req.loggedInUserId };
+    if (searchText) {
+      match.name = { $regex: searchText, $options: "i" }; //? search by the product name and convert it in small letters
+    }
+
     const products = await Product.aggregate([
-      { $match: { sellerId: req.loggedInUserId } },
+      { $match: match },
       { $skip: skip },
       { $limit: limit },
       {
@@ -162,7 +168,7 @@ router.post(
           price: 1,
           brand: 1,
           image: 1,
-          description: 1,
+          description: { $substr: ["$description", 0, 200] }, //? in order to display only 200 characters
         },
       },
     ]);
