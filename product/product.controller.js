@@ -2,9 +2,12 @@ import express from "express";
 import { isSeller, isUser } from "../middleware/authentication.middleware.js";
 import validateMongoIdFromParams from "../middleware/validate.mongo.id.js";
 import validateRequestBody from "../middleware/validate.req.body.js";
-import Product from "./product.model.js";
-import { addProductValidationSchema } from "./product.validation.js";
 import checkMongoIdEquality from "../utils/mongo.id.equality.js";
+import Product from "./product.model.js";
+import {
+  addProductValidationSchema,
+  paginationDataValidationSchema,
+} from "./product.validation.js";
 
 const router = express.Router();
 
@@ -110,6 +113,61 @@ router.put(
     return res
       .status(200)
       .send({ message: "Product has been edited successfully" });
+  }
+);
+
+//* get product details
+router.get(
+  "/detail/:id",
+  isUser,
+  validateMongoIdFromParams,
+  async (req, res) => {
+    // extract product id from req.params
+    const productId = req.params.id;
+
+    // find product using product id
+    const product = await Product.findById(productId);
+
+    // if not product, throw error
+    if (!product) {
+      return res.status(404).send({ message: "Product not found" });
+    }
+
+    // send res
+    return res
+      .status(200)
+      .send({ message: "Success!", productDetails: product });
+  }
+);
+
+//* list product by seller
+router.post(
+  "/seller/list",
+  isSeller,
+  validateRequestBody(paginationDataValidationSchema),
+  async (req, res) => {
+    //? extract pagination data from req.body
+    const { page, limit } = req.body; //? destructure
+
+    //? calculate skip
+    const skip = (page - 1) * limit;
+
+    const products = await Product.aggregate([
+      { $match: { sellerId: req.loggedInUserId } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          name: 1,
+          price: 1,
+          brand: 1,
+          image: 1,
+          description: 1,
+        },
+      },
+    ]);
+
+    return res.status(200).send({ message: "success", productList: products });
   }
 );
 
