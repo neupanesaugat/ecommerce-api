@@ -1,5 +1,9 @@
 import express from "express";
-import { isSeller, isUser } from "../middleware/authentication.middleware.js";
+import {
+  isBuyer,
+  isSeller,
+  isUser,
+} from "../middleware/authentication.middleware.js";
 import validateMongoIdFromParams from "../middleware/validate.mongo.id.js";
 import validateRequestBody from "../middleware/validate.req.body.js";
 import checkMongoIdEquality from "../utils/mongo.id.equality.js";
@@ -157,6 +161,42 @@ router.post(
     if (searchText) {
       match.name = { $regex: searchText, $options: "i" }; //? search by the product name and convert it in small letters
     }
+
+    const products = await Product.aggregate([
+      { $match: match },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          name: 1,
+          price: 1,
+          brand: 1,
+          image: 1,
+          description: { $substr: ["$description", 0, 200] }, //? in order to display only 200 characters
+        },
+      },
+    ]);
+
+    return res.status(200).send({ message: "success", productList: products });
+  }
+);
+
+//* list product by buyer
+router.post(
+  "/buyer/list",
+  isBuyer,
+  validateRequestBody(paginationDataValidationSchema),
+  async (req, res) => {
+    const { page, limit, searchText } = req.body; //? destructure
+
+    let match = {};
+    if (searchText) {
+      match.name = { $regex: searchText, $options: "i" };
+    }
+    //? extract pagination data from req.body
+
+    //? calculate skip
+    const skip = (page - 1) * limit;
 
     const products = await Product.aggregate([
       { $match: match },
