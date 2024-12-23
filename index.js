@@ -3,8 +3,18 @@ import connectDB from "./database-connection/db.connect.js";
 import userRoutes from "./user/user.controller.js";
 import productRoutes from "./product/product.controller.js";
 import cartRoutes from "./cart/cart.controller.js";
+import cors from "cors";
 
 const app = express();
+
+// cross origin resource sharing
+// to allow requests from frontend
+
+app.use(
+  cors({
+    origin: "*", //? allow request from all domain
+  })
+);
 
 // make app use  json
 app.use(express.json());
