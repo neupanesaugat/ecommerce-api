@@ -1,18 +1,18 @@
-import express from "express";
-import { isBuyer } from "../middleware/authentication.middleware.js";
-import validateRequestBody from "../middleware/validate.req.body.js";
-import { addCartItemsValidationSchema } from "./cart.validation.js";
-import mongoose from "mongoose";
-import checkMongoIdValidity from "../utils/mongo.id.validity.js";
-import Product from "../product/product.model.js";
-import Cart from "./cart.model.js";
-import validateMongoIdFromParams from "../middleware/validate.mongo.id.js";
+import express from 'express';
+import { isBuyer } from '../middleware/authentication.middleware.js';
+import validateRequestBody from '../middleware/validate.req.body.js';
+import { addCartItemsValidationSchema } from './cart.validation.js';
+import mongoose from 'mongoose';
+import checkMongoIdValidity from '../utils/mongo.id.validity.js';
+import Product from '../product/product.model.js';
+import Cart from './cart.model.js';
+import validateMongoIdFromParams from '../middleware/validate.mongo.id.js';
 
 const router = express.Router();
 
 //* add item to cart
 router.post(
-  "/add/item",
+  '/add/item',
   isBuyer,
   validateRequestBody(addCartItemsValidationSchema),
 
@@ -24,7 +24,7 @@ router.post(
 
     // if not valid, throw error
     if (!isValidId) {
-      return res.status(400).send({ message: "Invalid Mongo ID" });
+      return res.status(400).send({ message: 'Invalid Mongo ID' });
     }
 
     //call next function
@@ -39,12 +39,18 @@ router.post(
 
     // if not product, throw error
     if (!product) {
-      return res.status(404).send({ message: "Product not found!" });
+      return res.status(404).send({ message: 'Product not found!' });
+    }
+
+    const cart = await Cart.findOne({ productId, buyerId: req.loggedInUserId });
+    console.log(cart);
+    if (cart) {
+      return res.status(403).send({ message: 'Product already in cart' });
     }
 
     // check if orderedQuantity does not exceed product quantity
     if (orderQuantity > product.quantity) {
-      return res.status(403).send({ message: "Product is outnumbered" });
+      return res.status(403).send({ message: 'Product is outnumbered' });
     }
 
     // add item to cart
@@ -55,25 +61,25 @@ router.post(
     });
 
     //send res
-    return res.status(201).send({ message: "Added to cart successfully" });
+    return res.status(201).send({ message: 'Added to cart successfully' });
   }
 );
 
 //* flush cart (remove all items from cart)
-router.delete("/flush", isBuyer, async (req, res) => {
+router.delete('/flush', isBuyer, async (req, res) => {
   // extract buyerId from req.loggedInUserId
   const buyerId = req.loggedInUserId;
   // remove al; items from cart for that buyer
   await Cart.deleteMany({ buyerId: buyerId });
 
   // send res
-  return res.status(200).send({ message: "Cart cleared successfully" });
+  return res.status(200).send({ message: 'Cart cleared successfully' });
 });
 
 //* removes single item from cart
 //? id => cardId
 router.delete(
-  "/item/delete/:id",
+  '/item/delete/:id',
   isBuyer,
   validateMongoIdFromParams,
   async (req, res) => {
@@ -90,14 +96,14 @@ router.delete(
     if (!cart) {
       return res
         .status(403)
-        .send({ message: "You are not the owner of this cart" });
+        .send({ message: 'You are not the owner of this cart' });
     }
 
     // delete cart
     await Cart.deleteOne({ _id: cartId, buyerId: req.loggedInUserId });
 
     // send res
-    return res.status(200).send({ message: "Item deleted successfully" });
+    return res.status(200).send({ message: 'Item deleted successfully' });
   }
 );
 
